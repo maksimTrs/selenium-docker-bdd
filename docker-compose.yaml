@@ -1,0 +1,59 @@
+version: "3"
+services:
+  hub:
+    image: selenium/hub:4.1.0
+    container_name: selenium-hub-bdd
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+  chrome:
+    image: selenium/node-chrome:4.1.0
+    shm_size: 2gb
+    depends_on:
+      - hub
+    environment:
+      - SE_EVENT_BUS_HOST=hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_INSTANCES=4
+      - SE_NODE_MAX_SESSIONS=4
+  firefox:
+    image: selenium/node-firefox:4.1.0
+    shm_size: 2gb
+    #volumes:
+    #- ./downloads:/home/seluser/Downloads
+    depends_on:
+      - hub
+    environment:
+      - SE_EVENT_BUS_HOST=hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_INSTANCES=4
+      - SE_NODE_MAX_SESSIONS=4
+  selenium_docker_bdd_project_chrome:
+    build: .
+    container_name: bdd_container_chrome
+    #volumes:
+     # - ./output:/usr/share/udemy/target/cucumber-reports
+    environment:
+      - BROWSER=CHROME
+      - HUB_HOST=hub
+      - TAGS=@End2End
+    depends_on:
+      #- firefox
+      - chrome
+  selenium_docker_bdd_project_firefox:
+    build: .
+    container_name: bdd_container_firefox
+    environment:
+      - BROWSER=FIREFOX
+      - HUB_HOST=hub
+      - TAGS=@End2End
+    depends_on:
+      - firefox
+      #- chrome
+
+# docker compose up
+# docker compose up  -d --scale chrome=3 --scale firefox=3
+# mvn clean package -DskipTests
